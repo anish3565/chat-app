@@ -33,3 +33,55 @@ server.bind((IP_address, PORT))
 server.listen(100)
 # Listening to 100 active connections, number can be increased as per convenience
 
+list_of_clients=[]
+
+def clientThread(conn, addr):
+
+    # Sending a message to the client whose user object is conn
+    conn.send("Welcome to the chatroom!")
+
+    while True:
+        try:
+            message=conn.recv(2048)
+            if message:
+                # Prints message and address of the client that sent the message to the server terminal
+                print("<" + addr[0] + ">" + message)
+
+                # Calls broadcast function to send message to all
+                message_to_send="<"+addr[0]+">"+message
+                broadcast(message_to_send, conn)
+
+            else:
+                # Remove the message if its broken or have no content
+                remove(conn)
+        except:
+            continue
+
+"""
+Broadcasting message to all clients whose object is not the same as the one sending the message
+"""
+def broadcast(message, connection):
+    for clients in list_of_clients:
+        if clients != connection:
+            try:
+                clients.send(message)
+            except:
+                clients.close()
+
+                # if the link is broken, we remove the client
+                remove(clients)
+
+"""
+Removing the object from the list that was created at the beginning of the program
+"""
+def remove(connection):
+    if connection in list_of_clients:
+        list_of_clients.remove(connection)
+
+while True:
+    """
+    Accepts a connection requests and stores two parameters, 
+    conn which is a socket object for that user,
+    and addr which contains the IP address of the client that just connected
+    """
+    
